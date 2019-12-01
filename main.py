@@ -63,12 +63,22 @@ def build_tree_graph(root: Node, grf: nx.DiGraph, root_id):
         build_tree_graph(c, grf, new_root)
 
 
-def main(g):
-    g.add_node(2, name='source')
-    g.add_node(5, name='sink')
+def main(g: nx.MultiGraph):
+    source = None
+    sink = None
+
+    for n in g.nodes(data='name', default='none'):
+        if n[1] == 'source':
+            source = n[0]
+        elif n[1] == 'sink':
+            sink = n[0]
+
+    if source is None or sink is None:
+        print("Cant find the source and sink of the graph")
+        return
 
     root = Node(g, None, None)
-    build_conditional_tree(root, 2, 5)
+    build_conditional_tree(root, source, sink)
 
     print(f'Path: {find_best_path(root)}')
 
@@ -81,4 +91,29 @@ def main(g):
 
 
 if __name__ == '__main__':
-    main(nx.read_edgelist('graph.txt', create_using=nx.MultiGraph, nodetype=int, data=(('r', float),)))
+    nodes = None
+    edges = None
+
+    filePath = 'g.tgf'
+    with open(filePath) as f:
+        lines = f.read().splitlines()
+        split_index = lines.index("#")
+        nodes = lines[0:split_index]
+        edges = lines[split_index+1:]
+
+    g = nx.MultiGraph()
+    if nodes is not None:
+        for node in nodes:
+            params = node.split(" ")
+            name = params[0] if len(params) == 1 else params[1]
+            g.add_node(params[0], name=name)
+
+    if edges is not None:
+        for edge in edges:
+            params = edge.split(" ")
+            if len(params) < 3:
+                print("Invalid edge, reliability could be missing")
+                exit(0)
+            g.add_edge(params[0], params[1], r=float(params[2]))
+
+    main(g)
