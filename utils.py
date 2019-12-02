@@ -19,6 +19,13 @@ def are_parallel(a, b):
 
 def simplify(grf: nx.MultiGraph):
     simplified = False
+
+    ns = list(grf.nodes)
+    for n in ns:
+        if grf.has_node(n):
+            if simplify_shorted_elements(grf, n):
+                simplified = True
+
     nodes_to_remove = []
     for node in grf.nodes(data='name', default='none'):
         if grf.degree[node[0]] == 2 and not is_source(node) and not is_sink(node):
@@ -71,3 +78,31 @@ def is_spg(graph: nx.MultiGraph):
     while simplify(g):
         pass
     return g.number_of_nodes() == 2
+
+
+def simplify_shorted_elements(g: nx.Graph, node):
+    try:
+        edge_list = nx.algorithms.find_cycle(g, source=node)
+    except nx.exception.NetworkXNoCycle:
+        return False
+
+    node_list = list(dict.fromkeys([e[0] for e in edge_list] + [e[1] for e in edge_list]))
+
+    shorted = True
+    base = None
+    for n in node_list:
+        if g.degree[n] > 2:
+            if base is None:
+                base = n
+            else:
+                shorted = False
+                break
+    if base is not None:
+        node_list.remove(base)
+    if '1' in node_list or '2' in node_list:
+        return False
+    if shorted:
+        g.remove_edges_from(edge_list)
+        g.remove_nodes_from(node_list)
+        return True
+    return False

@@ -13,8 +13,11 @@ def build_conditional_tree(root: Node, source, sink):
         for edge in grf.edges(data='r', default=1.0, keys=True):
             if edge[1] == source or edge[1] == sink:
                 g_good = nx.contracted_nodes(grf, edge[1], edge[0], False)
+                new_node = edge[1]
             else:
                 g_good = nx.contracted_nodes(grf, edge[0], edge[1], False)
+                new_node = edge[0]
+            # utils.simplify_shorted_elements(g_good, new_node)
             child_good = Node(g_good, edge, True)
 
             g_bad = nx.MultiGraph(grf)
