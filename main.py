@@ -2,32 +2,43 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from networkx.drawing.nx_agraph import graphviz_layout
+import sys
 
 import utils
 from Node import Node
 
 
+def when_n_is_good(g, edge, source, sink):
+    if (edge[1] == source or edge[1] == sink) and (edge[0] == source or edge[0] == sink):
+        g_good = nx.MultiGraph()
+        g_good.add_node(source, name='source')
+        g_good.add_node(sink, name='sink')
+        g_good.add_edge(source, sink, r=1.0)
+    elif edge[1] == source or edge[1] == sink:
+        g_good = nx.contracted_nodes(g, edge[1], edge[0], False)
+    else:
+        g_good = nx.contracted_nodes(g, edge[0], edge[1], False)
+    return g_good
+
+
+def when_n_is_bad(g, edge, source, sink):
+    g_bad = nx.MultiGraph(g)
+    g_bad.remove_edge(edge[0], edge[1], edge[2])
+    to_remove = []
+    for node in g_bad.nodes:
+        if g_bad.degree[node] == 1 and node != source and node != sink:
+            to_remove.append(node)
+    g_bad.remove_nodes_from(to_remove)
+    return g_bad
+
+
 def build_conditional_tree(root: Node, source, sink):
-    if not utils.is_spg(root.data):
+    if not utils.is_spg(root.data, source, sink):
         grf: nx.MultiGraph = root.data
         for edge in grf.edges(data='r', default=1.0, keys=True):
-            if edge[1] == source or edge[1] == sink:
-                g_good = nx.contracted_nodes(grf, edge[1], edge[0], False)
-                new_node = edge[1]
-            else:
-                g_good = nx.contracted_nodes(grf, edge[0], edge[1], False)
-                new_node = edge[0]
-            # utils.simplify_shorted_elements(g_good, new_node)
-            child_good = Node(g_good, edge, True)
+            child_good = Node(when_n_is_good(grf, edge, source, sink), edge, True)
 
-            g_bad = nx.MultiGraph(grf)
-            g_bad.remove_edge(edge[0], edge[1], edge[2])
-            to_remove = []
-            for node in g_bad.nodes:
-                if g_bad.degree[node] == 1 and node != source and node != sink:
-                    to_remove.append(node)
-            g_bad.remove_nodes_from(to_remove)
-            child_bad = Node(g_bad, edge, False)
+            child_bad = Node(when_n_is_bad(grf, edge, source, sink), edge, False)
 
             build_conditional_tree(child_good, source, sink)
             build_conditional_tree(child_bad, source, sink)
@@ -66,7 +77,7 @@ def build_tree_graph(root: Node, grf: nx.DiGraph, root_id):
         build_tree_graph(c, grf, new_root)
 
 
-def main(g: nx.MultiGraph):
+def solve_graph(g: nx.MultiGraph):
     source = None
     sink = None
 
@@ -93,16 +104,15 @@ def main(g: nx.MultiGraph):
     plt.show()
 
 
-if __name__ == '__main__':
+def build_graph_from_tgf(file_path):
     nodes = None
     edges = None
 
-    filePath = 'g.tgf'
-    with open(filePath) as f:
+    with open(file_path) as f:
         lines = f.read().splitlines()
         split_index = lines.index("#")
         nodes = lines[0:split_index]
-        edges = lines[split_index+1:]
+        edges = lines[split_index + 1:]
 
     g = nx.MultiGraph()
     if nodes is not None:
@@ -119,4 +129,55 @@ if __name__ == '__main__':
                 exit(0)
             g.add_edge(params[0], params[1], r=float(params[2]))
 
-    main(g)
+    return g
+
+
+if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        g = build_graph_from_tgf(sys.argv[1])
+        solve_graph(g)
+    elif len(sys.argv) == 3:
+        g = build_graph_from_tgf(sys.argv[1])
+        source = None
+        sink = None
+        edge = None
+
+        for n in g.nodes(data='name', default='none'):
+            if n[1] == 'source':
+                source = n[0]
+            elif n[1] == 'sink':
+                sink = n[0]
+
+        edge_nodes = str(sys.argv[2]).split("-")
+        if len(edge_nodes) != 2:
+            print("Incorrect edge format")
+            exit(0)
+        for e in g.edges(data=True, keys=True):
+            if e[0] == edge_nodes[0] and e[1] == edge_nodes[1] or e[0] == edge_nodes[1] and e[1] == edge_nodes[0]:
+                edge = e
+        if edge is None:
+            print("Specified edge not found")
+            exit(0)
+
+        if source is None or sink is None:
+            print("Cant find the source and sink of the graph")
+            exit(0)
+        g_good = when_n_is_good(g, edge, source, sink)
+        utils.simplify_shorted_elements(g_good, source, sink)
+        g_bad = when_n_is_bad(g, edge, sink, source)
+
+        plt.subplot(2, 2, 1)
+        nx.draw(g, with_labels=True)
+        plt.title("Initial graph")
+
+        plt.subplot(2, 2, 3)
+        nx.draw(g_good, with_labels=True)
+        plt.title(f'{sys.argv[2]} is good')
+
+        plt.subplot(2, 2, 4)
+        nx.draw(g_bad, with_labels=True)
+        plt.title(f'{sys.argv[2]} is bad')
+        plt.show()
+
+    else:
+        print("Incorrect usage")

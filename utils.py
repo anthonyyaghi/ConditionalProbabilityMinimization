@@ -17,14 +17,10 @@ def are_parallel(a, b):
     return min(a[0], a[1]) == min(b[0], b[1]) and max(a[0], a[1]) == max(b[0], b[1]) and a[2] != b[2]
 
 
-def simplify(grf: nx.MultiGraph):
+def simplify(grf: nx.MultiGraph, source, sink):
     simplified = False
 
-    ns = list(grf.nodes)
-    for n in ns:
-        if grf.has_node(n):
-            if simplify_shorted_elements(grf, n):
-                simplified = True
+    simplify_shorted_elements(grf, source, sink)
 
     nodes_to_remove = []
     for node in grf.nodes(data='name', default='none'):
@@ -73,21 +69,28 @@ def simplify(grf: nx.MultiGraph):
     return simplified
 
 
-def is_spg(graph: nx.MultiGraph):
+def is_spg(graph: nx.MultiGraph, source, sink):
     g = nx.MultiGraph(graph)
-    while simplify(g):
+    while simplify(g, source, sink):
         pass
     return g.number_of_nodes() == 2
 
 
-def simplify_shorted_elements(g: nx.Graph, node):
+def simplify_shorted_elements(g: nx.Graph, source, sink):
+    ns = list(g.nodes)
+    for n in ns:
+        if g.has_node(n):
+            if remove_shorted(g, n, source, sink) == -1:
+                break
+
+
+def remove_shorted(g: nx.Graph, node, source, sink):
     try:
         edge_list = nx.algorithms.find_cycle(g, source=node)
     except nx.exception.NetworkXNoCycle:
-        return False
+        return -1
 
     node_list = list(dict.fromkeys([e[0] for e in edge_list] + [e[1] for e in edge_list]))
-
     shorted = True
     base = None
     for n in node_list:
@@ -99,10 +102,12 @@ def simplify_shorted_elements(g: nx.Graph, node):
                 break
     if base is not None:
         node_list.remove(base)
-    if '1' in node_list or '2' in node_list:
-        return False
+
+    if source in node_list or sink in node_list:
+        return 0
+
     if shorted:
         g.remove_edges_from(edge_list)
         g.remove_nodes_from(node_list)
-        return True
-    return False
+        return 1
+    return 0
