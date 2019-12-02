@@ -167,17 +167,22 @@ if __name__ == '__main__':
         g_bad = when_n_is_bad(g, edge, sink, source)
 
         plt.subplot(2, 2, 1)
-        nx.draw(g, with_labels=True)
+        fixed_positions = {source: (-10, 10), sink: (10, 10)}
+        fixed_nodes = fixed_positions.keys()
+        pos = nx.spring_layout(g, pos=fixed_positions, fixed=fixed_nodes)
+        nx.draw(g, pos, with_labels=True)
         plt.title("Initial graph")
 
         plt.subplot(2, 2, 3)
-        nx.draw(g_good, with_labels=True)
+        pos2 = nx.spring_layout(g_good, pos=fixed_positions, fixed=fixed_nodes)
+        nx.draw(g_good, pos2, with_labels=True)
         plt.title(f'{sys.argv[2]} is good')
 
         plt.subplot(2, 2, 4)
-        nx.draw(g_bad, with_labels=True)
+        pos3 = nx.spring_layout(g_bad, pos=fixed_positions, fixed=fixed_nodes)
+        nx.draw(g_bad, pos3, with_labels=True)
         plt.title(f'{sys.argv[2]} is bad')
-        plt.show()
 
+        plt.show()
     else:
         print("Incorrect usage")
