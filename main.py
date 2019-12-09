@@ -149,11 +149,20 @@ if __name__ == '__main__':
                 sink = n[0]
 
         edge_nodes = str(sys.argv[2]).split("-")
-        if len(edge_nodes) != 2:
+        if len(edge_nodes) != 3:
             print("Incorrect edge format")
             exit(0)
+        n1_set = False
+        n2_set = False
+        for n in g.nodes(data='name', default='none'):
+            if edge_nodes[0] == n[1] and not n1_set:
+                edge_nodes[0] = n[0]
+                n1_set = True
+            if edge_nodes[1] == n[1] and not n2_set:
+                edge_nodes[1] = n[0]
+                n2_set = True
         for e in g.edges(data=True, keys=True):
-            if e[0] == edge_nodes[0] and e[1] == edge_nodes[1] or e[0] == edge_nodes[1] and e[1] == edge_nodes[0]:
+            if ((e[0] == edge_nodes[0] and e[1] == edge_nodes[1]) or (e[0] == edge_nodes[1] and e[1] == edge_nodes[0])) and (edge_nodes[2] == str(e[3]['r'])):
                 edge = e
         if edge is None:
             print("Specified edge not found")
@@ -166,21 +175,26 @@ if __name__ == '__main__':
         utils.simplify_shorted_elements(g_good, source, sink)
         g_bad = when_n_is_bad(g, edge, sink, source)
 
+        g_labels = dict((n, d['name']) for n, d in g.nodes(data=True))
+        good_labels = dict((n, d['name']) for n, d in g_good.nodes(data=True))
+        bad_labels = dict((n, d['name']) for n, d in g_bad.nodes(data=True))
+
         plt.subplot(2, 2, 1)
         fixed_positions = {source: (-10, 10), sink: (10, 10)}
         fixed_nodes = fixed_positions.keys()
-        pos = nx.spring_layout(g, pos=fixed_positions, fixed=fixed_nodes)
-        nx.draw(g, pos, with_labels=True)
+        # pos = nx.spring_layout(g, pos=fixed_positions, fixed=fixed_nodes)
+        pos = nx.spectral_layout(g)
+        nx.draw(g, pos, labels=g_labels)
         plt.title("Initial graph")
 
         plt.subplot(2, 2, 3)
         pos2 = nx.spring_layout(g_good, pos=fixed_positions, fixed=fixed_nodes)
-        nx.draw(g_good, pos2, with_labels=True)
+        nx.draw(g_good, pos2, labels=good_labels)
         plt.title(f'{sys.argv[2]} is good')
 
         plt.subplot(2, 2, 4)
         pos3 = nx.spring_layout(g_bad, pos=fixed_positions, fixed=fixed_nodes)
-        nx.draw(g_bad, pos3, with_labels=True)
+        nx.draw(g_bad, pos3, labels=bad_labels)
         plt.title(f'{sys.argv[2]} is bad')
 
         plt.show()
