@@ -44,11 +44,33 @@ Email: anthony.yaghi@lau.edu}
 \section{Introduction}
 The field of reliability study started to take shape during the second world
 war. A lot of new military equipments were introduced and the main appplication
-of reliability was focused on the vaccum tube which was an integral part of many
+of reliability study was focused on the vaccum tube which was an integral part of many
 of these equipements, like radar systems. And so, the military needed a
 measurement of how likely these costly equipements were to fails in order to
 mitigate the risk of a malfunction during the war. Today, reliability study
-is a large field with both military and commercial applications.\\
+is a large field with both military and commercial applications. A common way to
+represent a system is using a graph or a network where each edge represents a
+component, by using this representation, one can visualize the system which
+makes it easier to apply different evaluation methods. One such evaluation
+method is the conditional probability approach, it consists of simplifying the
+system by reducing it into a set of series-parallel systems and re-combining
+their solution. The conditional probability approach is a very powerful tool
+that can be used to solve any complex system elegantly; in this project we will
+explore the possibility of implementing this method on a computer. The objective
+is to have a working implementation that is capable of taking a representation
+of a system and finding the best way to reduce it using the conditional probability
+approach. In addition, the implementation could be used as an educational tool
+to show visually how a system gets divided into 2 new sub-systems for a given
+component. We will start by explaining the conditional probability
+method and how to transform it into an algorithm. In the second part of the
+report, we will present the actual implementation and the technical challlenges
+faced. Finally, we will see how the implementation will perform on a set of
+different problems/networks.\\
+
+\section{The Conditional Probability Approach}
+The conditional probability approach consists of gradually breaking a complex
+system into smaller and simpler series-parallel sub-systems.
+
 
 
 \section{Conclusion}
