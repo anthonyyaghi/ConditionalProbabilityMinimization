@@ -17,3 +17,7 @@ Run main.py and pass as arguments:
 Given only a graph file the program will output the conditional probability tree. If the second parameter is added, we generate the 2 sub-systems that results from
 reducing the system based on the specified edge.
 
+![](output1.png)
+
+![](output2.png)
+
