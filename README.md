@@ -1,5 +1,7 @@
 # ConditionalProbabilityMinimization
-Solving complex reliability networks using conditional probability. The input to the program is a graph in the format of a tgf file passed as a command line argument, for example: 
+Solving complex reliability networks using conditional probability. For a detailed explanation of the working of the algorithm check the report.pdf document.
+
+The input to the program is a graph in the format of a tgf file passed as a command line argument, for example: 
 
 ***python main.py graph.tgf***
 
